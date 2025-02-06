@@ -1,0 +1,41 @@
+CREATE TABLE Register (
+    register_id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    phone VARCHAR(20),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    active TINYINT(1) DEFAULT 1
+);
+
+ALTER TABLE Courses ADD COLUMN active TINYINT(1) DEFAULT 1;
+
+// Course Selection -> Load Active Batches
+    document.getElementById('course_id').addEventListener('change', function() {
+        const selectedCourse = this.value;
+        const batchContainer = document.getElementById('batch-container');
+        const batchSelect = document.getElementById('batch_id');
+
+        batchSelect.innerHTML = '<option value="">-- Select Batch --</option>';
+
+        if (selectedCourse) {
+            batchContainer.style.display = 'block';
+
+            // Fetch batches based on the selected course
+            fetch(`get_batches.php?course_id=${selectedCourse}`)
+                .then(response => response.json())
+                .then(batches => {
+                    batchSelect.innerHTML = '<option value="">-- Select Batch --</option>'; // Reset dropdown
+
+                    batches.forEach(batch => {
+                        const option = document.createElement('option');
+                        option.value = batch.batch_id;
+                        option.textContent = batch.batch_name;
+                        batchSelect.appendChild(option);
+                    });
+                })
+                .catch(error => console.error('Error fetching batches:', error));
+        } else {
+            batchContainer.style.display = 'none';
+        }
+    });

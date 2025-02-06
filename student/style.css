@@ -1,0 +1,54 @@
+
+/* Centered dashboard container */
+.dashboard-container {
+    max-width: 800px;
+    margin: 50px auto;
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+/* Dashboard heading */
+.dashboard-container h2 {
+    margin-bottom: 20px;
+    font-weight: bold;
+    color: #333333;
+}
+
+/* Subtle instruction text */
+.text-muted {
+    color: #6c757d;
+}
+
+/* Dashboard links */
+.dashboard-links a {
+    display: block;
+    margin: 10px 0;
+    padding: 12px 20px;
+    text-align: center;
+    background-color: #007bff;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    font-size: 16px;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+/* Hover effect on links */
+.dashboard-links a:hover {
+    background-color: #0056b3;
+    transform: scale(1.02);
+}
+
+/* Add spacing for mobile view */
+@media (max-width: 576px) {
+    .dashboard-container {
+        padding: 20px;
+    }
+    .dashboard-links a {
+        font-size: 14px;
+        padding: 10px;
+    }
+}
