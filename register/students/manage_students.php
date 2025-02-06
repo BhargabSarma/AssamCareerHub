@@ -50,18 +50,7 @@ $stmt->execute($params);
 $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
-<!-- <!DOCTYPE html>
-<html lang="en">
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Assam Career Hub</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="../../css/style.css">
-</head>
-
-<body> -->
 
 <?php include '../header.php'; ?>
 <div class="container my-4">
@@ -124,7 +113,7 @@ $students = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <td><?= htmlspecialchars($student['course_name']); ?></td>
                         <td><?= htmlspecialchars($student['batch_name']); ?></td>
                         <td>
-                            <a href="edit_student.php?id=<?= $student['student_id']; ?>" class="btn btn-warning btn-sm">Edit</a>
+                            <a href="edit_student.php?student_id=<?php echo $student['student_id']; ?>" class="btn btn-warning btn-sm">Edit</a>
                             <a href="delete_student.php?student_id=<?= $student['student_id']; ?>"
                                 class="btn btn-danger btn-sm"
                                 onclick="return confirm('Are you sure you want to delete this student?');">

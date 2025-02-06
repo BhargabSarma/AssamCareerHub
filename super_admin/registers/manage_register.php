@@ -64,12 +64,13 @@ $registers = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         <?php echo $register['active'] ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-danger">Inactive</span>'; ?>
                     </td>
                     <td>
-                        <a href="edit_register.php" class="btn btn-primary btn-sm">Edit</a>
+                        <a href="edit_register.php?register_id=<?php echo $register['register_id']; ?>" class="btn btn-primary btn-sm">Edit</a>
                         <a href="?toggle=<?php echo $register['active'] ? 0 : 1; ?>&register_id=<?php echo $register['register_id']; ?>"
                             class="btn btn-<?php echo $register['active'] ? 'warning' : 'success'; ?> btn-sm">
                             <?php echo $register['active'] ? 'Deactivate' : 'Activate'; ?>
                         </a>
                     </td>
+
                 </tr>
             <?php endforeach; ?>
         </tbody>

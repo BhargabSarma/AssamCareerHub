@@ -1,12 +1,12 @@
 <?php
 session_start();
-if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] != 'student') {
-    header("Location: ../login.php");
+if (!isset($_SESSION['student_id'])) {
+    header("Location: ../student_login.php");
     exit;
 }
 include '../config.php';
 
-$student_id = $_SESSION['user_id'];
+$student_id = $_SESSION['student_id'];
 $stmt = $conn->prepare("SELECT * FROM Students WHERE student_id = ?");
 $stmt->execute([$student_id]);
 $student = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -28,7 +28,7 @@ $student = $stmt->fetch(PDO::FETCH_ASSOC);
 </head>
 
 <body>
-<?php include 'student_nevbar.php'; ?>
+    <?php include 'student_nevbar.php'; ?>
     <div class="dashboard-container">
         <h2>Welcome, <?php echo htmlspecialchars($student['name']); ?> 👋</h2>
         <p class="text-muted">What would you like to do today?</p>
