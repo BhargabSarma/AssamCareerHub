@@ -60,6 +60,15 @@ if (!isset($_SESSION['super_admin_id'])) {
             <div class="col-md-4">
                 <div class="card text-center">
                     <div class="card-body">
+                        <h5 class="card-title">View Payments</h5>
+                        <p class="card-text">Can View all the transactions.</p>
+                        <a href="./payments/view_payments.php" class="btn btn-primary">Go</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card text-center">
+                    <div class="card-body">
                         <h5 class="card-title">Manage Registers</h5>
                         <p class="card-text">Create or manage registers (sub-admins).</p>
                         <a href="./registers/manage_register.php" class="btn btn-primary">Go</a>

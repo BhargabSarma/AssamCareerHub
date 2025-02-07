@@ -15,18 +15,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $description = trim($_POST['description']);
     $duration = trim($_POST['duration']);
     $fee = trim($_POST['fee']);
+    $booking_amount = trim($_POST['booking_amount']);
     $active = 1; // By default, a new course is active
 
     // Input validation
-    if (empty($course_name) || empty($duration) || empty($fee)) {
-        $error = 'Course name, duration, and fee are required.';
+    if (empty($course_name) || empty($duration) || empty($fee) || empty($booking_amount)) {
+        $error = 'Course name, duration, fee, and booking amount are required.';
     } elseif (!is_numeric($fee) || $fee <= 0) {
         $error = 'Fee must be a positive number.';
+    } elseif (!is_numeric($booking_amount) || $booking_amount <= 0) {
+        $error = 'Booking amount must be a positive number.';
+    } elseif ($booking_amount > $fee) {
+        $error = 'Booking amount cannot be greater than the course fee.';
     } else {
         // Insert course into database
         try {
-            $stmt = $conn->prepare("INSERT INTO Courses (course_name, description, duration, fee, active) VALUES (?, ?, ?, ?, ?)");
-            if ($stmt->execute([$course_name, $description, $duration, $fee, $active])) {
+            $stmt = $conn->prepare("INSERT INTO Courses (course_name, description, duration, fee, booking_amount, active) VALUES (?, ?, ?, ?, ?, ?)");
+            if ($stmt->execute([$course_name, $description, $duration, $fee, $booking_amount, $active])) {
                 $success = 'Course added successfully!';
             } else {
                 $error = 'Failed to add the course. Please try again.';
@@ -65,6 +70,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="mb-3">
             <label for="fee" class="form-label">Fee:</label>
             <input type="number" name="fee" id="fee" class="form-control" step="0.01" required>
+        </div>
+        <div class="mb-3">
+            <label for="booking_amount" class="form-label">Booking Amount:</label>
+            <input type="number" name="booking_amount" id="booking_amount" class="form-control" step="0.01" required>
         </div>
         <button type="submit" class="btn btn-success">Add Course</button>
         <a href="manage_courses.php" class="btn btn-secondary">Back</a>
