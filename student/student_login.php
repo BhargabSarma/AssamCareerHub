@@ -11,8 +11,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $student = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($student && password_verify($password, $student['password'])) {
-        $_SESSION['user_id'] = $student['student_id'];
-        $_SESSION['user_role'] = 'student';
+        $_SESSION['student_id'] = $student['student_id'];
+
         header("Location: dashboard.php");
         exit;
     } else {
