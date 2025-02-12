@@ -70,6 +70,9 @@ $gender_counts = json_encode(array_column($gender_data, 'count'));
                         <li class="nav-item">
                             <a class="nav-link" href="./students/manage_students.php">Students</a>
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="./payments/manage_payments.php">Payments</a>
+                        </li>
 
                         <li class="nav-item">
                             <a class="nav-link btn btn-danger text-white" href="../logout.php">Logout</a>

@@ -8,9 +8,10 @@ if (!isset($_SESSION['register_id'])) {
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Collect form data
     $name = $_POST['name'];
     $email = $_POST['email'];
-    $password = !empty($_POST['password']) ? $_POST['password'] : rand(10000, 99999); // Auto-generate 5-digit password
+    $password = !empty($_POST['password']) ? $_POST['password'] : rand(10000, 99999);
     $hashed_password = password_hash($password, PASSWORD_BCRYPT);
     $phone = $_POST['phone'];
     $gender = $_POST['gender'];
@@ -21,38 +22,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $course_id = $_POST['course_id'];
     $batch_id = $_POST['batch_id'];
 
-    // Payment details from form
-    $booking_amount = $_POST['booking_amount'];
-    $installment_1 = $_POST['installment_1'];
-    $installment_2 = $_POST['installment_2'];
-    $remaining_fee = $_POST['remaining_fee'];
-    $payment_date = date('Y-m-d'); // Current date
-    $full_payment = $remaining_fee == 0 ? 1 : 0; // Check if the full payment is made
-    $amount = $booking_amount + $installment_1 + $installment_2; // Total amount paid (Booking + Installments)
+    // Fetch course details (course fee, booking amount)
+    $stmt = $conn->prepare("SELECT fee, booking_amount FROM Courses WHERE course_id = ?");
+    $stmt->execute([$course_id]);
+    $course = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if (!$course) {
+        $_SESSION['error'] = "Course not found!";
+        header("Location: add_student.php");
+        exit;
+    }
+
+    $booking_amount = $course['booking_amount'];
+    $total_fee = $course['fee'];
+
+    // Payment calculation
+    $installment_1 = ($total_fee - $booking_amount) / 2;
+    $installment_2 = ($total_fee - $booking_amount) / 2;
 
     try {
-        // Insert student into Students table
-        $stmt = $conn->prepare("INSERT INTO Students (name, email, password, phone, gender, state, city, address) VALUES (?, ?, ?, ?, ?,?,?,?)");
+        // Insert student data
+        $stmt = $conn->prepare("INSERT INTO Students (name, email, password, phone, gender, state, city, address) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
         $stmt->execute([$name, $email, $hashed_password, $phone, $gender, $state, $city, $address]);
-
-        // Get the last inserted student ID
         $student_id = $conn->lastInsertId();
 
-        // Allocate student to course and batch
-        if (!empty($course_id) && !empty($batch_id)) {
-            $stmt = $conn->prepare("INSERT INTO Student_Batches (student_id, batch_id) VALUES (?, ?)");
-            $stmt->execute([$student_id, $batch_id]);
-        }
+        // Allocate student to batch
+        $stmt = $conn->prepare("INSERT INTO student_batches (student_id, batch_id, registration_status, payment_status) 
+                        VALUES (?, ?, 'Booked', 'Pending')");
+        $stmt->execute([$student_id, $batch_id]);
 
-        // Insert payment details into Payments table (Single entry for all payments)
-        $stmt = $conn->prepare("INSERT INTO Payments (student_id, course_id, booking_amount, installment_1, installment_2, full_payment, status, payment_date, payment_type, amount, batch_id) 
-                                VALUES (?, ?, ?, ?, ?, ?, 'Pending', ?, 'Booking + Installments', ?, ?)");
-        $stmt->execute([$student_id, $course_id, $booking_amount, $installment_1, $installment_2, $full_payment, $payment_date, $amount, $batch_id]);
+        // Insert booking payment record
+        $stmt = $conn->prepare("INSERT INTO Payments (student_id, course_id, booking_amount, installment_1, installment_2, status, payment_date, payment_type, amount, batch_id) 
+                        VALUES (?, ?, ?, ?, ?, 'Partially Paid', NOW(), 'Booking', ?, ?)");
+        $stmt->execute([$student_id, $course_id, $booking_amount, $installment_1, $installment_2, $booking_amount, $batch_id]);
 
-        $_SESSION['success'] = "Student added successfully! Password: $password"; // Show generated password
-        header("Location: manage_students.php");
+        // After inserting the student and payment
+        $_SESSION['success'] = "Student added successfully!";
+        header("Location: ../payments/manage_payments.php");
         exit;
-    } catch (Exception $e) {
+    } catch (Exception $e) {        
         $_SESSION['error'] = "Error: " . $e->getMessage();
     }
 }
@@ -122,6 +130,7 @@ $courses = $coursesStmt->fetchAll(PDO::FETCH_ASSOC);
             <label for="custom_address">Custom Address</label>
             <input type="text" id="custom_address" name="custom_address" class="form-control" disabled>
         </div>
+
         <!-- Course selection and payment -->
         <div class="form-group">
             <label for="course_id">Select Course</label>
@@ -151,12 +160,12 @@ $courses = $coursesStmt->fetchAll(PDO::FETCH_ASSOC);
 
             <div class="form-group">
                 <label for="installment_1">1st Installment</label>
-                <input type="text" id="installment_1" name="installment_1" class="form-control">
+                <input type="text" id="installment_1" name="installment_1" class="form-control" readonly>
             </div>
 
             <div class="form-group">
                 <label for="installment_2">2nd Installment</label>
-                <input type="text" id="installment_2" name="installment_2" class="form-control">
+                <input type="text" id="installment_2" name="installment_2" class="form-control" readonly>
             </div>
 
             <div class="form-group">
@@ -171,6 +180,7 @@ $courses = $coursesStmt->fetchAll(PDO::FETCH_ASSOC);
 
 <?php include '../footer.php'; ?>
 <script src="../../js/cities.js"></script>
+<!-- <script src="../../js/add_student.js"></script> -->
 
 <script>
     // Password Generator
@@ -205,7 +215,6 @@ $courses = $coursesStmt->fetchAll(PDO::FETCH_ASSOC);
             }
         });
     })
-
     document.getElementById('course_id').addEventListener('change', function() {
         const selectedCourse = this.value;
         const batchContainer = document.getElementById('batch-container');

@@ -24,11 +24,11 @@
                     <li class="nav-item">
                         <a class="nav-link" href="./students/manage_students.php">Students</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="./payments/manage_payments.php">Payments</a>
+                    </li>
                     <!-- <li class="nav-item">
                     <a class="nav-link" href="../allocated_courses.php">Courses</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="../allocate_students_batch.php">View Allocated Students</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="../batches/manage_batches.php">Manage Batches</a>
