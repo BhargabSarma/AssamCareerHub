@@ -1,8 +1,8 @@
 <?php
 session_start();
-include '../config.php';
+include '../../config.php';
 
-if (!isset($_SESSION['admin_id'])) {
+if (!isset($_SESSION['register_id'])) {
     header("Location: admin_login.php");
     exit;
 }

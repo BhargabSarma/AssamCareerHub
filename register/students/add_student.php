@@ -37,8 +37,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $total_fee = $course['fee'];
 
     // Payment calculation
-    $installment_1 = ($total_fee - $booking_amount) / 2;
-    $installment_2 = ($total_fee - $booking_amount) / 2;
+    $payment_option = $_POST['payment_option']; // Get selected radio button value
+    // Collect payment type
+    $payment_type = $_POST['payment_type']; // Get selected payment type (Online, Offline, or Bank Transfer)
+    $installment_1 = 0;
+    $installment_2 = 0;
+    $full_payment = 0;
+    $paid_amount = 0;
+    $status = 'Pending';
+
+    if ($payment_option == "no_payment") {
+        $paid_amount = $booking_amount;
+    } elseif ($payment_option == "first_installment") {
+        $installment_1 = ($total_fee - $booking_amount) / 2;
+        $paid_amount = $booking_amount + $installment_1;
+    } elseif ($payment_option == "full_payment") {
+        $full_payment = $total_fee - $booking_amount;
+        $paid_amount = $total_fee;
+    }
+
+    // Set status
+    if ($paid_amount == $total_fee) {
+        $status = 'Paid';
+    } else {
+        $status = 'Partially Paid';
+    }
 
     try {
         // Insert student data
@@ -51,16 +74,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         VALUES (?, ?, 'Booked', 'Pending')");
         $stmt->execute([$student_id, $batch_id]);
 
-        // Insert booking payment record
-        $stmt = $conn->prepare("INSERT INTO Payments (student_id, course_id, booking_amount, installment_1, installment_2, status, payment_date, payment_type, amount, batch_id) 
-                        VALUES (?, ?, ?, ?, ?, 'Partially Paid', NOW(), 'Booking', ?, ?)");
-        $stmt->execute([$student_id, $course_id, $booking_amount, $installment_1, $installment_2, $booking_amount, $batch_id]);
+        // Insert payment record
+        $stmt = $conn->prepare("INSERT INTO Payments 
+(student_id, course_id, booking_amount, installment_1, installment_2, full_payment, status, payment_date, payment_type, amount, batch_id) 
+VALUES (?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?)");
+        $stmt->execute([$student_id, $course_id, $booking_amount, $installment_1, $installment_2, $full_payment, $status, $payment_type, $paid_amount, $batch_id]);
 
         // After inserting the student and payment
         $_SESSION['success'] = "Student added successfully!";
         header("Location: ../payments/manage_payments.php");
         exit;
-    } catch (Exception $e) {        
+    } catch (Exception $e) {
         $_SESSION['error'] = "Error: " . $e->getMessage();
     }
 }
@@ -157,6 +181,17 @@ $courses = $coursesStmt->fetchAll(PDO::FETCH_ASSOC);
                 <label for="booking_amount">Booking Amount</label>
                 <input type="text" id="booking_amount" name="booking_amount" class="form-control" readonly>
             </div>
+            <div class="form-group">
+                <label>Payment Option</label><br>
+                <input type="radio" id="no_payment" name="payment_option" value="no_payment" checked>
+                <label for="no_payment">No Payment</label>
+
+                <input type="radio" id="first_installment" name="payment_option" value="first_installment">
+                <label for="first_installment">First Installment</label>
+
+                <input type="radio" id="full_payment" name="payment_option" value="full_payment">
+                <label for="full_payment">Full Payment</label>
+            </div>
 
             <div class="form-group">
                 <label for="installment_1">1st Installment</label>
@@ -173,6 +208,17 @@ $courses = $coursesStmt->fetchAll(PDO::FETCH_ASSOC);
                 <input type="text" id="remaining_fee" name="remaining_fee" class="form-control" readonly>
             </div>
         </div>
+        <div class="form-group">
+            <label>Payment Type</label><br>
+            <input type="radio" id="payment_online" name="payment_type" value="Online" checked>
+            <label for="payment_online">Online</label>
+
+            <input type="radio" id="payment_offline" name="payment_type" value="Offline">
+            <label for="payment_offline">Offline</label>
+
+            <input type="radio" id="payment_bank_transfer" name="payment_type" value="Bank Transfer">
+            <label for="payment_bank_transfer">Bank Transfer</label>
+        </div>
 
         <button type="submit" class="btn btn-primary mt-3">Add Student</button>
     </form>
@@ -180,9 +226,9 @@ $courses = $coursesStmt->fetchAll(PDO::FETCH_ASSOC);
 
 <?php include '../footer.php'; ?>
 <script src="../../js/cities.js"></script>
-<!-- <script src="../../js/add_student.js"></script> -->
+<script src="../../js/add_student.js"></script>
 
-<script>
+<!-- <script>
     // Password Generator
     document.getElementById('generate-password').addEventListener('click', function() {
         document.getElementById('password').value = Math.floor(10000 + Math.random() * 90000); // Generate 5-digit password
@@ -191,6 +237,8 @@ $courses = $coursesStmt->fetchAll(PDO::FETCH_ASSOC);
     document.addEventListener("DOMContentLoaded", function() {
         const stateSelect = document.getElementById("state");
         const citySelect = document.getElementById("city");
+        const customAddressToggle = document.getElementById("custom_address_toggle");
+        const customAddressInput = document.getElementById("custom_address");
 
         // Populate states
         Object.keys(citiesByState).forEach(state => {
@@ -214,13 +262,25 @@ $courses = $coursesStmt->fetchAll(PDO::FETCH_ASSOC);
                 });
             }
         });
-    })
+
+        // Handle custom address toggle
+        customAddressToggle.addEventListener("change", function() {
+            if (this.checked) {
+                customAddressInput.disabled = false;
+                customAddressInput.required = true;
+            } else {
+                customAddressInput.disabled = true;
+                customAddressInput.required = false;
+                customAddressInput.value = ''; // Reset field when unchecked
+            }
+        });
+    });
+
     document.getElementById('course_id').addEventListener('change', function() {
         const selectedCourse = this.value;
         const batchContainer = document.getElementById('batch-container');
         const paymentSection = document.getElementById('payment-section');
         const courseOption = this.options[this.selectedIndex];
-        const courseFee = parseFloat(courseOption.getAttribute('data-fee'));
         const bookingAmountInput = document.getElementById('booking_amount');
         const remainingFeeInput = document.getElementById('remaining_fee');
         const installment1Input = document.getElementById('installment_1');
@@ -230,18 +290,28 @@ $courses = $coursesStmt->fetchAll(PDO::FETCH_ASSOC);
         paymentSection.style.display = 'none';
 
         if (selectedCourse) {
-            // Show batches and payment section
-            batchContainer.style.display = 'block';
-            paymentSection.style.display = 'block';
+            // Fetch course details (booking amount)
+            fetch(`get_course_details.php?course_id=${selectedCourse}`)
+                .then(response => response.json())
+                .then(course => {
+                    if (course) {
+                        const totalFee = parseFloat(course.fee);
+                        const bookingAmount = parseFloat(course.booking_amount);
 
-            bookingAmountInput.value = 1000; // Assuming booking amount is 1000 by default
-            remainingFeeInput.value = courseFee - 1000;
+                        bookingAmountInput.value = bookingAmount;
+                        remainingFeeInput.value = totalFee - bookingAmount;
 
-            // Calculate installment amounts
-            const remainingFee = courseFee - 1000;
-            const installmentAmount = remainingFee / 2;
-            installment1Input.value = installmentAmount;
-            installment2Input.value = installmentAmount;
+                        // Calculate installment amounts
+                        const remainingFee = totalFee - bookingAmount;
+                        const installmentAmount = remainingFee / 2;
+                        installment1Input.value = installmentAmount;
+                        installment2Input.value = installmentAmount;
+
+                        // Show payment section
+                        paymentSection.style.display = 'block';
+                    }
+                })
+                .catch(error => console.error('Error fetching course details:', error));
 
             // Fetch batches based on the selected course
             fetch(`get_batches.php?course_id=${selectedCourse}`)
@@ -256,8 +326,40 @@ $courses = $coursesStmt->fetchAll(PDO::FETCH_ASSOC);
                         option.textContent = batch.batch_name;
                         batchSelect.appendChild(option);
                     });
+
+                    // Show batch selection
+                    batchContainer.style.display = 'block';
                 })
                 .catch(error => console.error('Error fetching batches:', error));
         }
     });
-</script>
+
+    // Handle Payment Option Selection
+    document.querySelectorAll('input[name="payment_option"]').forEach(option => {
+        option.addEventListener('change', function() {
+            const bookingAmount = parseFloat(document.getElementById('booking_amount').value) || 0;
+            const remainingFeeInput = document.getElementById('remaining_fee');
+            const installment1Input = document.getElementById('installment_1');
+            const installment2Input = document.getElementById('installment_2');
+            const courseOption = document.getElementById('course_id').options[document.getElementById('course_id').selectedIndex];
+            const courseFee = parseFloat(courseOption.getAttribute('data-fee')) || 0;
+
+            // Calculate the correct remaining fee
+            const remainingFee = courseFee - bookingAmount;
+
+            if (this.value === "no_payment") {
+                installment1Input.value = (remainingFee / 2).toFixed(2);
+                installment2Input.value = (remainingFee / 2).toFixed(2);
+                remainingFeeInput.value = remainingFee.toFixed(2);
+            } else if (this.value === "first_installment") {
+                installment1Input.value = (remainingFee / 2).toFixed(2);
+                installment2Input.value = 0;
+                remainingFeeInput.value = installment1Input.value;
+            } else if (this.value === "full_payment") {
+                installment1Input.value = remainingFee.toFixed(2);
+                installment2Input.value = 0;
+                remainingFeeInput.value = 0;
+            }
+        });
+    });
+</script> -->
