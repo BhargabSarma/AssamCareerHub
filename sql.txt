@@ -39,3 +39,46 @@ ALTER TABLE Courses ADD COLUMN active TINYINT(1) DEFAULT 1;
             batchContainer.style.display = 'none';
         }
     });
+
+   // new updates 12-02-2025
+
+    ALTER TABLE student_batches
+
+ADD COLUMN registration_status ENUM('Booked', 'Pending', 'Completed') DEFAULT 'Pending',
+ADD COLUMN booking_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+ADD COLUMN payment_status ENUM('Pending', 'Paid', 'Partially Paid') DEFAULT 'Pending';
+
+
+// COMPLETE student_batches TABLE
+
+CREATE TABLE student_batches (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    student_id INT NOT NULL,
+    batch_id INT NOT NULL,
+    registration_status ENUM('Booked', 'Pending', 'Completed') DEFAULT 'Pending',
+    booking_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    payment_status ENUM('Pending', 'Paid', 'Partially Paid') DEFAULT 'Pending',
+    FOREIGN KEY (student_id) REFERENCES Students(student_id),
+    FOREIGN KEY (batch_id) REFERENCES Batches(batch_id)
+);
+
+
+// PAYMENTS TABLE
+
+CREATE TABLE Payments (
+    payment_id INT AUTO_INCREMENT PRIMARY KEY,
+    student_id INT NOT NULL,
+    course_id INT NOT NULL,
+    booking_amount DECIMAL(10,2) NOT NULL DEFAULT 0,
+    installment_1 DECIMAL(10,2) DEFAULT NULL,
+    installment_2 DECIMAL(10,2) DEFAULT NULL,
+    full_payment DECIMAL(10,2) DEFAULT NULL,
+    status ENUM('Pending', 'Partially Paid', 'Fully Paid') DEFAULT 'Pending',
+    payment_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (student_id) REFERENCES Students(student_id) ON DELETE CASCADE,
+    FOREIGN KEY (course_id) REFERENCES Courses(course_id) ON DELETE CASCADE
+);
+
+// Alter Courses Table to Add booking_amount
+
+ALTER TABLE Courses ADD COLUMN booking_amount DECIMAL(10,2) NOT NULL DEFAULT 0;
