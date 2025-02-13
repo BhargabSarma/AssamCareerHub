@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if ($student && password_verify($password, $student['password'])) {
         $_SESSION['student_id'] = $student['student_id'];
 
-        header("Location: dashboard.php");
+        header("Location: ./dashboard.php");
         exit;
     } else {
         $error = "Invalid email or password!";
@@ -68,6 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             </div>
         </div>
     </div>
+
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>

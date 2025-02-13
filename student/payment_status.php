@@ -1,12 +1,12 @@
 <?php
 session_start();
-if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] != 'student') {
-    header("Location: ../login.php");
+if (!isset($_SESSION['student_id'])) {
+    header("Location: ./student_login.php");
     exit;
 }
 include '../config.php';
 
-$student_id = $_SESSION['user_id'];
+$student_id = $_SESSION['student_id'];
 $upi_id = "upi@bank"; // Replace with actual UPI ID
 
 // Fetch payment details for the student
@@ -15,14 +15,16 @@ $stmt = $conn->prepare("
         c.course_name, 
         b.start_date, 
         b.end_date, 
-        p.payment_type,
-        p.amount, 
-        p.payment_date, 
-        p.payment_method,
-        p.payment_id 
-    FROM Payments p
-    INNER JOIN batches b ON p.batch_id = b.batch_id
-    INNER JOIN courses c ON b.course_id = c.course_id
+        p.payment_id,
+        p.booking_amount,
+        p.installment_1,
+        p.installment_2,
+        p.full_payment,
+        p.status,
+        p.payment_date
+    FROM payments p
+    INNER JOIN courses c ON p.course_id = c.course_id
+    INNER JOIN batches b ON c.course_id = b.course_id
     WHERE p.student_id = ?
 ");
 $stmt->execute([$student_id]);
@@ -35,8 +37,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['payment_id'])) {
 
     if (!empty($transaction_id)) {
         $updateStmt = $conn->prepare("
-            UPDATE Payments 
-            SET payment_method = 'UPI', payment_date = NOW() 
+            UPDATE payments 
+            SET payment_date = NOW(), status = 'Paid' 
             WHERE payment_id = ? AND student_id = ?
         ");
         $updateStmt->execute([$payment_id, $student_id]);
@@ -59,90 +61,93 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['payment_id'])) {
 </head>
 
 <body>
-    <div class="dashboard-container">
-        <h2>Your Payment Status</h2>
-        <p class="text-muted">Below is the record of your payments.</p>
+<?php include 'student_nevbar.php'; ?>
 
-        <?php if (isset($message)) : ?>
-            <div class="alert <?php echo strpos($message, 'successfully') !== false ? 'alert-success' : 'alert-danger'; ?>">
-                <?php echo $message; ?>
-            </div>
-        <?php endif; ?>
+<div class="container mt-5">
+    <h2 class="text-center text-primary">Your Payment Status</h2>
+    <p class="text-center text-muted">Below is the record of your payments.</p>
 
-        <table class="table table-bordered">
-            <thead class="table-dark">
-                <tr>
-                    <th>Course Name</th>
-                    <th>Batch Start</th>
-                    <th>Batch End</th>
-                    <th>Payment Type</th>
-                    <th>Amount (₹)</th>
-                    <th>Payment Date</th>
-                    <th>Payment Method</th>
-                    <th>Action</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php if (count($payments) > 0) : ?>
-                    <?php foreach ($payments as $payment) : ?>
-                        <tr>
-                            <td><?php echo htmlspecialchars($payment['course_name']); ?></td>
-                            <td><?php echo htmlspecialchars($payment['start_date']); ?></td>
-                            <td><?php echo htmlspecialchars($payment['end_date']); ?></td>
-                            <td><?php echo htmlspecialchars($payment['payment_type']); ?></td>
-                            <td>₹<?php echo htmlspecialchars($payment['amount']); ?></td>
-                            <td><?php echo $payment['payment_date'] ? htmlspecialchars($payment['payment_date']) : '<span class="text-danger">Pending</span>'; ?></td>
-                            <td><?php echo $payment['payment_method'] ? htmlspecialchars($payment['payment_method']) : '<span class="text-danger">Pending</span>'; ?></td>
-                            <td>
-                                <?php if (!$payment['payment_date']) : ?>
-                                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#payModal<?php echo $payment['payment_id']; ?>">
-                                        Pay Now
-                                    </button>
+    <?php if (isset($message)) : ?>
+        <div class="alert <?php echo strpos($message, 'successfully') !== false ? 'alert-success' : 'alert-danger'; ?>">
+            <?php echo $message; ?>
+        </div>
+    <?php endif; ?>
 
-                                    <!-- Payment Modal -->
-                                    <div class="modal fade" id="payModal<?php echo $payment['payment_id']; ?>" tabindex="-1" aria-hidden="true">
-                                        <div class="modal-dialog">
-                                            <div class="modal-content">
-                                                <div class="modal-header">
-                                                    <h5 class="modal-title">Pay Now - <?php echo htmlspecialchars($payment['course_name']); ?></h5>
-                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                                </div>
-                                                <div class="modal-body">
-                                                    <p><strong>Amount:</strong> ₹<?php echo htmlspecialchars($payment['amount']); ?></p>
-                                                    <p><strong>UPI ID:</strong> <span class="text-primary"><?php echo $upi_id; ?></span></p>
-                                                    <p><strong>Scan QR Code:</strong></p>
-                                                    <img src="../images/qr-code.png" alt="QR Code" class="img-fluid" width="200">
-                                                    <hr>
-                                                    <form method="POST">
-                                                        <input type="hidden" name="payment_id" value="<?php echo $payment['payment_id']; ?>">
-                                                        <div class="mb-3">
-                                                            <label class="form-label">Enter Transaction ID:</label>
-                                                            <input type="text" name="transaction_id" class="form-control" required>
-                                                        </div>
-                                                        <button type="submit" class="btn btn-success">Submit Payment</button>
-                                                    </form>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                <?php else : ?>
-                                    <span class="text-success">Paid</span>
-                                <?php endif; ?>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                <?php else : ?>
-                    <tr>
-                        <td colspan="8" class="text-center">No payment records found.</td>
-                    </tr>
-                <?php endif; ?>
-            </tbody>
-        </table>
+    <table class="table table-bordered table-hover mt-3">
+        <thead class="table-dark">
+            <tr>
+                <th>Course Name</th>
+                <th>Batch Start</th>
+                <th>Batch End</th>
+                <th>Booking Amount</th>
+                <th>Installment 1</th>
+                <th>Installment 2</th>
+                <th>Full Payment</th>
+                <th>Payment Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+    <?php if (count($payments) > 0) : ?>
+        <?php foreach ($payments as $payment) : ?>
+            <tr>
+                <td><?php echo htmlspecialchars($payment['course_name']); ?></td>
+                <td><?php echo htmlspecialchars($payment['start_date']); ?></td>
+                <td><?php echo htmlspecialchars($payment['end_date']); ?></td>
 
+                <!-- Booking Amount -->
+                <td>
+                    ₹<?php echo htmlspecialchars($payment['booking_amount']); ?><br>
+                    <span class="badge <?php echo ($payment['booking_amount'] > 0 && $payment['status'] === 'Paid') ? 'bg-success' : 'bg-danger'; ?>">
+                        <?php echo ($payment['booking_amount'] > 0 && $payment['status'] === 'Paid') ? 'Paid' : 'Pending'; ?>
+                    </span>
+                </td>
+
+                <!-- Installment 1 -->
+                <td>
+                    ₹<?php echo htmlspecialchars($payment['installment_1']); ?><br>
+                    <span class="badge <?php echo ($payment['installment_1'] > 0 && $payment['status'] === 'Paid') ? 'bg-success' : 'bg-danger'; ?>">
+                        <?php echo ($payment['installment_1'] > 0 && $payment['status'] === 'Paid') ? 'Paid' : 'Pending'; ?>
+                    </span>
+                </td>
+
+                <!-- Installment 2 -->
+                <td>
+                    ₹<?php echo htmlspecialchars($payment['installment_2']); ?><br>
+                    <span class="badge <?php echo ($payment['installment_2'] > 0 && $payment['status'] === 'Paid') ? 'bg-success' : 'bg-danger'; ?>">
+                        <?php echo ($payment['installment_2'] > 0 && $payment['status'] === 'Paid') ? 'Paid' : 'Pending'; ?>
+                    </span>
+                </td>
+
+                <!-- Full Payment (No Status Badge) -->
+                <td>₹<?php echo htmlspecialchars($payment['full_payment']); ?></td>
+
+                <td>
+                    <?php if ($payment['status'] !== 'Paid') : ?>
+                        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#payModal<?php echo $payment['payment_id']; ?>">
+                            Pay Now
+                        </button>
+                    <?php else : ?>
+                        <span class="text-success">✔ Payment Complete</span>
+                    <?php endif; ?>
+                </td>
+            </tr>
+        <?php endforeach; ?>
+    <?php else : ?>
+        <tr>
+            <td colspan="9" class="text-center">No payment records found.</td>
+        </tr>
+    <?php endif; ?>
+</tbody>
+
+    </table>
+
+    <div class="text-center mt-4">
         <a href="dashboard.php" class="btn btn-secondary">Back to Dashboard</a>
     </div>
+</div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 
 </html>
