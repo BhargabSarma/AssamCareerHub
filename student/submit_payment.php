@@ -1,7 +1,7 @@
 <?php
 session_start();
-if (!isset($_SESSION['user_id']) || $_SESSION['user_role'] != 'student') {
-    header("Location: ../login.php");
+if (!isset($_SESSION['student_id'])) {
+    header("Location: ./student_login.php");
     exit;
 }
 include '../config.php';
