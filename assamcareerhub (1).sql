@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Feb 13, 2025 at 08:38 AM
+-- Generation Time: Feb 13, 2025 at 08:47 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -21,6 +21,22 @@ SET time_zone = "+00:00";
 -- Database: `assamcareerhub`
 --
 
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `batches`
+--
+
+CREATE TABLE `batches` (
+  `batch_id` int(11) NOT NULL,
+  `course_id` int(11) NOT NULL,
+  `batch_name` varchar(100) NOT NULL,
+  `start_date` date DEFAULT NULL,
+  `end_date` date DEFAULT NULL,
+  `active` tinyint(1) DEFAULT 1,
+  `created_at` datetime DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 --
 -- Dumping data for table `batches`
 --
@@ -31,6 +47,24 @@ INSERT INTO `batches` (`batch_id`, `course_id`, `batch_name`, `start_date`, `end
 (3, 4, 'DM batch1', '2025-03-01', '2025-07-31', 1, '2025-02-12 14:01:44'),
 (4, 3, 'GD batch2', '2025-03-01', '2025-04-01', 1, '2025-02-12 15:15:41');
 
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `courses`
+--
+
+CREATE TABLE `courses` (
+  `course_id` int(11) NOT NULL,
+  `course_name` varchar(100) NOT NULL,
+  `description` text DEFAULT NULL,
+  `duration` varchar(50) DEFAULT NULL,
+  `fee` decimal(10,2) NOT NULL,
+  `created_by` int(11) DEFAULT NULL,
+  `created_at` datetime DEFAULT current_timestamp(),
+  `active` tinyint(1) DEFAULT 1,
+  `booking_amount` decimal(10,2) NOT NULL DEFAULT 0.00
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 --
 -- Dumping data for table `courses`
 --
@@ -39,6 +73,28 @@ INSERT INTO `courses` (`course_id`, `course_name`, `description`, `duration`, `f
 (1, 'Video Editing course', 'Advanced Course on Video Editing', '3 Months', 17000.00, NULL, '2025-01-28 13:57:20', 1, 1000.00),
 (3, 'Graphics Designing', 'Advance Course on graphics designing', '3 months', 18000.00, NULL, '2025-01-28 13:59:09', 1, 1000.00),
 (4, 'Digital Marketing', 'Advanced course on digital marketing', '6 months', 20000.00, NULL, '2025-02-12 14:00:57', 1, 2000.00);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `payments`
+--
+
+CREATE TABLE `payments` (
+  `payment_id` int(11) NOT NULL,
+  `student_id` int(11) NOT NULL,
+  `course_id` int(11) NOT NULL,
+  `batch_id` int(11) NOT NULL,
+  `booking_amount` decimal(10,2) DEFAULT 0.00,
+  `installment_1` decimal(10,2) DEFAULT 0.00,
+  `installment_2` decimal(10,2) DEFAULT 0.00,
+  `full_payment` decimal(10,2) DEFAULT 0.00,
+  `total_paid` decimal(10,2) GENERATED ALWAYS AS (`booking_amount` + `installment_1` + `installment_2` + `full_payment`) STORED,
+  `status` enum('Pending','Partially Paid','Paid') DEFAULT 'Pending',
+  `payment_date` timestamp NOT NULL DEFAULT current_timestamp(),
+  `payment_type` enum('Cash','Online','Bank Transfer') NOT NULL,
+  `amount` decimal(10,2) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `payments`
@@ -67,6 +123,22 @@ INSERT INTO `payments` (`payment_id`, `student_id`, `course_id`, `batch_id`, `bo
 (21, 51, 4, 3, 2000.00, 18000.00, 0.00, 0.00, 'Partially Paid', '2025-02-13 07:10:26', 'Bank Transfer', 2000.00),
 (22, 52, 4, 3, 2000.00, 9000.00, 0.00, 0.00, 'Partially Paid', '2025-02-13 07:11:44', '', 11000.00);
 
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `register`
+--
+
+CREATE TABLE `register` (
+  `register_id` int(11) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `email` varchar(255) NOT NULL,
+  `password` varchar(255) NOT NULL,
+  `phone` varchar(20) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `active` tinyint(1) DEFAULT 1
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 --
 -- Dumping data for table `register`
 --
@@ -75,6 +147,25 @@ INSERT INTO `register` (`register_id`, `name`, `email`, `password`, `phone`, `cr
 (1, 'register', 'register@gmail.com', '$2y$10$z4F1bJQ.OKGZwK8.XwpAl.8sPOS8WjI/yT0XLoMBL8plM.CkKBHj2', '1122334455', '2025-01-29 06:53:49', 0),
 (2, 'reshab', 'reshab@gmail.com', '$2y$10$10Nx9j3TITdxrWPyfCkQZeXt.n5spL0l5uEi.mdPG9Gw34./IUZdS', '112233445', '2025-01-31 06:25:21', 1),
 (3, 'ashif', 'ashif@gmail.com', '$2y$10$0kkeJ3RhGDbqPzUkry.ZvOLdl9RuXMe1eNjL0CJuH6q/tAXNfPZHC', '1122334455', '2025-01-31 08:55:38', 0);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `students`
+--
+
+CREATE TABLE `students` (
+  `student_id` int(11) NOT NULL,
+  `name` varchar(100) NOT NULL,
+  `email` varchar(100) DEFAULT NULL,
+  `password` varchar(255) DEFAULT NULL,
+  `phone` varchar(15) DEFAULT NULL,
+  `address` text DEFAULT NULL,
+  `registration_date` datetime DEFAULT current_timestamp(),
+  `city` varchar(255) DEFAULT NULL,
+  `state` varchar(255) DEFAULT NULL,
+  `gender` enum('Male','Female','Other') NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `students`
@@ -124,6 +215,21 @@ INSERT INTO `students` (`student_id`, `name`, `email`, `password`, `phone`, `add
 (50, 'messi', 'messi@gmail.com', '$2y$10$Kln874S./8/wTJqhF/150uMjD6djIRUVUqavSme0B/6FXxnt5bKEO', '9877665544', 'Kolkata, West Bengal', '2025-02-13 12:38:28', 'Kolkata', 'West Bengal', 'Other'),
 (51, 'heema', 'heema@gmail.com', '$2y$10$zPNW/auapZKpQU/gqtkMNem01ji6MBfQuRZ9Ikzzw4kikmA3Oe2r6', '9876545612', 'Thrissur, Kerala', '2025-02-13 12:40:26', 'Thrissur', 'Kerala', 'Female'),
 (52, 'heera', 'heera@gmail.com', '$2y$10$aDQpAjkNM6ctklXAuJQHJu6gR7zDtOtWmtHrrAH1d8uY05AzUEVWe', '9876545611', 'Thrissur, Kerala', '2025-02-13 12:41:44', 'Thrissur', 'Kerala', 'Male');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `student_batches`
+--
+
+CREATE TABLE `student_batches` (
+  `id` int(11) NOT NULL,
+  `student_id` int(11) NOT NULL,
+  `batch_id` int(11) NOT NULL,
+  `registration_status` enum('Booked','Pending','Completed') DEFAULT 'Pending',
+  `booking_date` datetime DEFAULT current_timestamp(),
+  `payment_status` enum('Pending','Paid','Partially Paid') DEFAULT 'Pending'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
 -- Dumping data for table `student_batches`
@@ -175,12 +281,189 @@ INSERT INTO `student_batches` (`id`, `student_id`, `batch_id`, `registration_sta
 (43, 51, 3, 'Booked', '2025-02-13 12:40:26', 'Pending'),
 (44, 52, 3, 'Booked', '2025-02-13 12:41:44', 'Pending');
 
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `super_admins`
+--
+
+CREATE TABLE `super_admins` (
+  `super_admin_id` int(11) NOT NULL,
+  `username` varchar(50) NOT NULL,
+  `email` varchar(100) NOT NULL,
+  `password` varchar(255) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 --
 -- Dumping data for table `super_admins`
 --
 
 INSERT INTO `super_admins` (`super_admin_id`, `username`, `email`, `password`) VALUES
 (1, 'superadmin', 'superadmin@example.com', '$2y$10$my66MLWQ4GF.85yKhjsNvOnEkn6H7RAmV3SfohATkL5ZDLBGwm2uS');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `users`
+--
+
+CREATE TABLE `users` (
+  `user_id` int(11) NOT NULL,
+  `username` varchar(100) NOT NULL,
+  `email` varchar(100) NOT NULL,
+  `password` varchar(255) NOT NULL,
+  `role` enum('SuperAdmin','Register') NOT NULL,
+  `created_at` datetime DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Indexes for dumped tables
+--
+
+--
+-- Indexes for table `batches`
+--
+ALTER TABLE `batches`
+  ADD PRIMARY KEY (`batch_id`),
+  ADD KEY `course_id` (`course_id`);
+
+--
+-- Indexes for table `courses`
+--
+ALTER TABLE `courses`
+  ADD PRIMARY KEY (`course_id`),
+  ADD UNIQUE KEY `course_name` (`course_name`),
+  ADD KEY `created_by` (`created_by`);
+
+--
+-- Indexes for table `payments`
+--
+ALTER TABLE `payments`
+  ADD PRIMARY KEY (`payment_id`),
+  ADD KEY `student_id` (`student_id`),
+  ADD KEY `course_id` (`course_id`),
+  ADD KEY `batch_id` (`batch_id`);
+
+--
+-- Indexes for table `register`
+--
+ALTER TABLE `register`
+  ADD PRIMARY KEY (`register_id`),
+  ADD UNIQUE KEY `email` (`email`);
+
+--
+-- Indexes for table `students`
+--
+ALTER TABLE `students`
+  ADD PRIMARY KEY (`student_id`),
+  ADD UNIQUE KEY `email` (`email`);
+
+--
+-- Indexes for table `student_batches`
+--
+ALTER TABLE `student_batches`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `student_id` (`student_id`),
+  ADD KEY `batch_id` (`batch_id`);
+
+--
+-- Indexes for table `super_admins`
+--
+ALTER TABLE `super_admins`
+  ADD PRIMARY KEY (`super_admin_id`),
+  ADD UNIQUE KEY `username` (`username`),
+  ADD UNIQUE KEY `email` (`email`);
+
+--
+-- Indexes for table `users`
+--
+ALTER TABLE `users`
+  ADD PRIMARY KEY (`user_id`),
+  ADD UNIQUE KEY `username` (`username`),
+  ADD UNIQUE KEY `email` (`email`);
+
+--
+-- AUTO_INCREMENT for dumped tables
+--
+
+--
+-- AUTO_INCREMENT for table `batches`
+--
+ALTER TABLE `batches`
+  MODIFY `batch_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+
+--
+-- AUTO_INCREMENT for table `courses`
+--
+ALTER TABLE `courses`
+  MODIFY `course_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+
+--
+-- AUTO_INCREMENT for table `payments`
+--
+ALTER TABLE `payments`
+  MODIFY `payment_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+
+--
+-- AUTO_INCREMENT for table `register`
+--
+ALTER TABLE `register`
+  MODIFY `register_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+
+--
+-- AUTO_INCREMENT for table `students`
+--
+ALTER TABLE `students`
+  MODIFY `student_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=53;
+
+--
+-- AUTO_INCREMENT for table `student_batches`
+--
+ALTER TABLE `student_batches`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=45;
+
+--
+-- AUTO_INCREMENT for table `super_admins`
+--
+ALTER TABLE `super_admins`
+  MODIFY `super_admin_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT for table `users`
+--
+ALTER TABLE `users`
+  MODIFY `user_id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- Constraints for dumped tables
+--
+
+--
+-- Constraints for table `batches`
+--
+ALTER TABLE `batches`
+  ADD CONSTRAINT `batches_ibfk_1` FOREIGN KEY (`course_id`) REFERENCES `courses` (`course_id`);
+
+--
+-- Constraints for table `courses`
+--
+ALTER TABLE `courses`
+  ADD CONSTRAINT `courses_ibfk_1` FOREIGN KEY (`created_by`) REFERENCES `users` (`user_id`);
+
+--
+-- Constraints for table `payments`
+--
+ALTER TABLE `payments`
+  ADD CONSTRAINT `payments_ibfk_1` FOREIGN KEY (`student_id`) REFERENCES `students` (`student_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `payments_ibfk_2` FOREIGN KEY (`course_id`) REFERENCES `courses` (`course_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `payments_ibfk_3` FOREIGN KEY (`batch_id`) REFERENCES `batches` (`batch_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `student_batches`
+--
+ALTER TABLE `student_batches`
+  ADD CONSTRAINT `student_batches_ibfk_1` FOREIGN KEY (`student_id`) REFERENCES `students` (`student_id`),
+  ADD CONSTRAINT `student_batches_ibfk_2` FOREIGN KEY (`batch_id`) REFERENCES `batches` (`batch_id`);
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
