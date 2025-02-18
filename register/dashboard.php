@@ -26,7 +26,7 @@ $stmt_students->execute();
 $student_count = $stmt_students->fetch(PDO::FETCH_ASSOC)['total_students'];
 
 // Fetch total payments received
-$stmt_payments = $conn->prepare("SELECT SUM(amount) AS total_payments FROM Payments");
+$stmt_payments = $conn->prepare("SELECT SUM(total_paid) AS total_payments FROM Payments");
 $stmt_payments->execute();
 $total_payments = $stmt_payments->fetch(PDO::FETCH_ASSOC)['total_payments'];
 ?>

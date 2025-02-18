@@ -9,9 +9,13 @@ if (!isset($_SESSION['register_id'])) {
 
 // Fetch all payment details
 $stmt = $conn->prepare("
-    SELECT p.payment_id, s.name AS student_name, s.email, c.course_name, c.fee, p.booking_amount, 
-           p.installment_1, p.installment_2, (p.booking_amount + p.installment_1 + p.installment_2) AS total_paid, 
-           c.fee - (p.booking_amount + p.installment_1 + p.installment_2) AS remaining_fee,
+    SELECT p.payment_id, s.name AS student_name, s.email, c.course_name, 
+           ROUND(c.fee, 2) AS fee, 
+           ROUND(p.booking_amount, 2) AS booking_amount, 
+           ROUND((c.fee - p.booking_amount) / 2, 2) AS installment_1, 
+           ROUND((c.fee - p.booking_amount) / 2, 2) AS installment_2, 
+           ROUND(p.total_paid, 2) AS total_paid, 
+           ROUND(c.fee - p.total_paid, 2) AS remaining_fee, 
            p.status
     FROM Payments p
     JOIN Students s ON p.student_id = s.student_id
@@ -52,15 +56,27 @@ $payments = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <td><?php echo htmlspecialchars($payment['student_name']); ?></td>
                     <td><?php echo htmlspecialchars($payment['email']); ?></td>
                     <td><?php echo htmlspecialchars($payment['course_name']); ?></td>
-                    <td><?php echo $payment['fee']; ?></td>
-                    <td><?php echo $payment['booking_amount']; ?></td>
-                    <td><?php echo $payment['installment_1']; ?></td>
-                    <td><?php echo $payment['installment_2']; ?></td>
-                    <td><?php echo $payment['total_paid']; ?></td>
-                    <td><?php echo $payment['remaining_fee']; ?></td>
-                    <td><?php echo $payment['status'] === 'Paid' ? 'Paid' : $payment['remaining_fee']; ?></td>
+                    <td><?php echo number_format($payment['fee'], 2); ?></td>
+                    <td><?php echo number_format($payment['booking_amount'], 2); ?></td>
+                    <td><?php echo number_format($payment['installment_1'], 2); ?></td>
+                    <td><?php echo number_format($payment['installment_2'], 2); ?></td>
+                    <td><?php echo number_format($payment['total_paid'], 2); ?></td>
+                    <td><?php echo number_format($payment['remaining_fee'], 2); ?></td>
                     <td>
-                        <?php if ($payment['status'] === 'Paid'): ?>
+                        <?php
+                        if ($payment['status'] === 'Pending') {
+                            echo '<span class="badge bg-warning">Pending</span>';
+                        } elseif ($payment['status'] === 'Partially Paid') {
+                            echo '<span class="badge bg-info">Partially Paid</span>';
+                        } elseif ($payment['status'] === 'Fully Paid') {
+                            echo '<span class="badge bg-success">Fully Paid</span>';
+                        } else {
+                            echo '<span class="badge bg-secondary">Unknown</span>';
+                        }
+                        ?>
+                    </td>
+                    <td>
+                        <?php if ($payment['status'] === 'Fully Paid'): ?>
                             <button class="btn btn-secondary btn-sm" disabled>Paid</button>
                         <?php elseif ($payment['remaining_fee'] > 0): ?>
                             <a href="pay_now.php?payment_id=<?php echo $payment['payment_id']; ?>" class="btn btn-success btn-sm">Pay Now</a>

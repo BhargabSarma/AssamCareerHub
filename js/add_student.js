@@ -45,11 +45,11 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 });
 
+// Handle Course Selection
 document.getElementById('course_id').addEventListener('change', function() {
     const selectedCourse = this.value;
     const batchContainer = document.getElementById('batch-container');
     const paymentSection = document.getElementById('payment-section');
-    const courseOption = this.options[this.selectedIndex];
     const bookingAmountInput = document.getElementById('booking_amount');
     const remainingFeeInput = document.getElementById('remaining_fee');
     const installment1Input = document.getElementById('installment_1');
@@ -64,8 +64,8 @@ document.getElementById('course_id').addEventListener('change', function() {
             .then(response => response.json())
             .then(course => {
                 if (course) {
-                    const totalFee = parseFloat(course.fee);
-                    const bookingAmount = parseFloat(course.booking_amount);
+                    const totalFee = parseFloat(course.fee) || 0;
+                    const bookingAmount = parseFloat(course.booking_amount) || 0;
 
                     bookingAmountInput.value = bookingAmount;
                     remainingFeeInput.value = totalFee - bookingAmount;
@@ -73,14 +73,19 @@ document.getElementById('course_id').addEventListener('change', function() {
                     // Calculate installment amounts
                     const remainingFee = totalFee - bookingAmount;
                     const installmentAmount = remainingFee / 2;
-                    installment1Input.value = installmentAmount;
-                    installment2Input.value = installmentAmount;
+                    installment1Input.value = installmentAmount.toFixed(2);
+                    installment2Input.value = installmentAmount.toFixed(2);
 
                     // Show payment section
                     paymentSection.style.display = 'block';
+                } else {
+                    console.error('Course details not found');
                 }
             })
-            .catch(error => console.error('Error fetching course details:', error));
+            .catch(error => {
+                console.error('Error fetching course details:', error);
+                remainingFeeInput.value = '';
+            });
 
         // Fetch batches based on the selected course
         fetch(`get_batches.php?course_id=${selectedCourse}`)
@@ -99,9 +104,13 @@ document.getElementById('course_id').addEventListener('change', function() {
                 // Show batch selection
                 batchContainer.style.display = 'block';
             })
-            .catch(error => console.error('Error fetching batches:', error));
+            .catch(error => {
+                console.error('Error fetching batches:', error);
+                batchContainer.style.display = 'none';
+            });
     }
 });
+
 
 // Handle Payment Option Selection
 document.querySelectorAll('input[name="payment_option"]').forEach(option => {
@@ -116,18 +125,23 @@ document.querySelectorAll('input[name="payment_option"]').forEach(option => {
         // Calculate the correct remaining fee
         const remainingFee = courseFee - bookingAmount;
 
+        // Reset fields before updating
+        installment1Input.value = '';
+        installment2Input.value = '';
+        remainingFeeInput.value = '';
+
         if (this.value === "no_payment") {
+            remainingFeeInput.value = remainingFee.toFixed(2);
             installment1Input.value = (remainingFee / 2).toFixed(2);
             installment2Input.value = (remainingFee / 2).toFixed(2);
-            remainingFeeInput.value = remainingFee.toFixed(2);
         } else if (this.value === "first_installment") {
+            remainingFeeInput.value = (remainingFee / 2).toFixed(2);
             installment1Input.value = (remainingFee / 2).toFixed(2);
             installment2Input.value = 0;
-            remainingFeeInput.value = installment1Input.value;
         } else if (this.value === "full_payment") {
+            remainingFeeInput.value = '0.00';
             installment1Input.value = remainingFee.toFixed(2);
             installment2Input.value = 0;
-            remainingFeeInput.value = 0;
         }
     });
 });
