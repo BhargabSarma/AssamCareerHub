@@ -36,15 +36,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $booking_amount = $course['booking_amount'];
     $total_fee = $course['fee'];
 
+    $payment_type = $_POST['payment_type'];
     $payment_method = $_POST['payment_method'];
     // Payment calculation
-    $payment_type = $_POST['payment_type'];
 
 
 
-    $installment_1 = 0;
-    $installment_2 = 0;
-    $full_payment = 0;
+    // $installment_1 = 0;
+    // $installment_2 = 0;
+    // $full_payment = 0;
     $paid_amount = 0;
     $status = 'Pending';
 
@@ -53,34 +53,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif ($payment_type == "first_installment") {
         $installment_1 = ($total_fee - $booking_amount) / 2;
         $paid_amount = $booking_amount + $installment_1;
-    } elseif ($payment_type == "full_payment") {
-        $full_payment = $total_fee - $booking_amount;
-        $paid_amount = $total_fee;
-    }
-
-    if ($paid_amount >= $total_fee) {
-        $status = 'Paid';
-    } elseif ($paid_amount > $booking_amount) {
         $status = 'Partially Paid';
+    } elseif ($payment_type == "full_payment") {
+        $paid_amount = $total_fee;  // Ensure full fee is marked as paid
+        $status = 'fully Paid';
     }
 
+    // Insert student data
     try {
-        // Insert student data
-        $stmt = $conn->prepare("INSERT INTO Students (name, email, password, phone, gender, state, city, address) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt = $conn->prepare("INSERT INTO Students (name, email, password, phone, gender, state, city, address) 
+                                VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
         $stmt->execute([$name, $email, $hashed_password, $phone, $gender, $state, $city, $address]);
         $student_id = $conn->lastInsertId();
 
         // Allocate student to batch
         $stmt = $conn->prepare("INSERT INTO student_batches (student_id, batch_id, registration_status, payment_status) 
-                        VALUES (?, ?, 'Booked', ?)");
+                                VALUES (?, ?, 'Booked', ?)");
         $stmt->execute([$student_id, $batch_id, $status]);
 
         // Insert payment record
         $stmt = $conn->prepare("INSERT INTO Payments 
-        (student_id, batch_id, course_id, booking_amount, status, payment_date, payment_type, payment_method, total_paid) 
-        VALUES (?, ?, ?, ?, ?, NOW(), ?, ?, ?)");
+                                (student_id, batch_id, course_id, booking_amount, status, payment_date, payment_type, payment_method, total_paid) 
+                                VALUES (?, ?, ?, ?, ?, NOW(), ?, ?, ?)");
 
-        $stmt->execute([$student_id, $course_id, $batch_id, $booking_amount,  $status, $payment_type, $payment_method, $paid_amount]);
+        $stmt->execute([$student_id, $batch_id, $course_id, $booking_amount, $status, $payment_type, $payment_method, $paid_amount]);
 
         $_SESSION['success'] = "Student added successfully!";
         header("Location: ../payments/manage_payments.php");
@@ -183,7 +179,7 @@ $courses = $coursesStmt->fetchAll(PDO::FETCH_ASSOC);
                 <input type="text" id="booking_amount" name="booking_amount" class="form-control" readonly>
             </div>
 
-            <!-- Payment Option Selection -->
+            <!-- Payment type Selection -->
             <div class="form-group">
                 <label>Payment Type</label><br>
                 <input type="radio" id="no_payment" name="payment_type" value="no_payment" checked>

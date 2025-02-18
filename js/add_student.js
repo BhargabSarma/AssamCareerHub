@@ -113,7 +113,7 @@ document.getElementById('course_id').addEventListener('change', function() {
 
 
 // Handle Payment Option Selection
-document.querySelectorAll('input[name="payment_option"]').forEach(option => {
+document.querySelectorAll('input[name="payment_type"]').forEach(option => {
     option.addEventListener('change', function() {
         const bookingAmount = parseFloat(document.getElementById('booking_amount').value) || 0;
         const remainingFeeInput = document.getElementById('remaining_fee');
