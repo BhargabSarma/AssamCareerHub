@@ -3,7 +3,7 @@ session_start();
 include '../../config.php';
 
 if (!isset($_SESSION['register_id'])) {
-    header("Location: admin_login.php");
+    header("Location: register_login.php");
     exit;
 }
 
@@ -13,9 +13,12 @@ if (isset($_GET['student_id'])) {
     try {
         // Start transaction
         $conn->beginTransaction();
+        // Delete related records in Payments (if exists)
+        $stmt = $conn->prepare("DELETE FROM Payments WHERE student_id = ?");
+        $stmt->execute([$student_id]);
 
-        // Delete related records in Student_Courses
-        $stmt = $conn->prepare("DELETE FROM Student_Courses WHERE student_id = ?");
+        // Delete related records in Student_batches
+        $stmt = $conn->prepare("DELETE FROM Student_batches WHERE student_id = ?");
         $stmt->execute([$student_id]);
 
         // Delete the student

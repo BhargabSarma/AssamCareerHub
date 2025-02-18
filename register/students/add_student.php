@@ -92,147 +92,188 @@ $coursesStmt->execute();
 $courses = $coursesStmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
-<?php include '../header.php'; ?>
+<!DOCTYPE html>
+<html lang="en">
 
-<div class="container my-4">
-    <h1 class="text-center mb-4">Add New Student</h1>
-    <form method="POST" id="add-student-form">
-        <!-- Form fields for student details -->
-        <div class="form-group">
-            <label for="name">Student Name</label>
-            <input type="text" id="name" name="name" class="form-control" required>
-        </div>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assam Career Hub</title>
+    <link rel="stylesheet" href="../../css/style.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
 
-        <div class="form-group">
-            <label for="email">Email</label>
-            <input type="email" id="email" name="email" class="form-control" required>
-        </div>
-
-        <div class="form-group">
-            <label for="password">Password (Auto-generated or custom entry)</label>
-            <div class="input-group">
-                <input type="text" id="password" name="password" class="form-control" readonly>
-                <button type="button" id="generate-password" class="btn btn-secondary">Generate</button>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="../dashboard.php">Assam Career Hub Register</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <!-- <li class="nav-item">
+                    <a class="nav-link" href="../dashboard.php">Dashboard</a>
+                </li> -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="./manage_students.php">Students</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="../payments/manage_payments.php">Payments</a>
+                    </li>
+                    <!-- <li class="nav-item">
+                    <a class="nav-link" href="../allocated_courses.php">Courses</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="../batches/manage_batches.php">Manage Batches</a>
+                </li> -->
+                    <li class="nav-item">
+                        <a class="nav-link btn btn-danger text-white" href="../../logout.php">Logout</a>
+                    </li>
+                </ul>
             </div>
         </div>
+    </nav>
 
-        <div class="form-group">
-            <label for="phone">Phone</label>
-            <input type="text" id="phone" name="phone" class="form-control">
-        </div>
-
-        <div class="form-group">
-            <label>Gender</label><br>
-            <input type="radio" id="male" name="gender" value="Male" required> <label for="male">Male</label>
-            <input type="radio" id="female" name="gender" value="Female" required> <label for="female">Female</label>
-            <input type="radio" id="other" name="gender" value="Other" required> <label for="other">Other</label>
-        </div>
-
-        <div class="form-group">
-            <label for="state">State</label>
-            <select id="state" name="state" class="form-control" required>
-                <option value="">-- Select State --</option>
-            </select>
-        </div>
-
-        <div class="form-group">
-            <label for="city">City</label>
-            <select id="city" name="city" class="form-control" required>
-                <option value="">-- Select City --</option>
-            </select>
-        </div>
-
-        <div class="form-group">
-            <input type="checkbox" id="custom_address_toggle">
-            <label for="custom_address_toggle">Enter custom address</label>
-        </div>
-
-        <div class="form-group">
-            <label for="custom_address">Custom Address</label>
-            <input type="text" id="custom_address" name="custom_address" class="form-control" disabled>
-        </div>
-
-        <!-- Course selection and payment -->
-        <div class="form-group">
-            <label for="course_id">Select Course</label>
-            <select id="course_id" name="course_id" class="form-control" required>
-                <option value="">-- Select Course --</option>
-                <?php foreach ($courses as $course): ?>
-                    <option value="<?php echo $course['course_id']; ?>" data-fee="<?php echo $course['fee']; ?>"><?php echo htmlspecialchars($course['course_name']); ?></option>
-                <?php endforeach; ?>
-            </select>
-        </div>
-
-        <!-- Batches dropdown based on course selection -->
-        <div class="form-group" id="batch-container" style="display:none;">
-            <label for="batch_id">Select Batch</label>
-            <select id="batch_id" name="batch_id" class="form-control" required>
-                <option value="">-- Select Batch --</option>
-            </select>
-        </div>
-
-        <!-- Payment Section -->
-        <div id="payment-section" style="display:none;">
-            <h4>Payment Details</h4>
+    <div class="container my-4">
+        <h1 class="text-center mb-4">Add New Student</h1>
+        <form method="POST" id="add-student-form">
+            <!-- Form fields for student details -->
             <div class="form-group">
-                <label for="booking_amount">Booking Amount</label>
-                <input type="text" id="booking_amount" name="booking_amount" class="form-control" readonly>
-            </div>
-
-            <!-- Payment type Selection -->
-            <div class="form-group">
-                <label>Payment Type</label><br>
-                <input type="radio" id="no_payment" name="payment_type" value="no_payment" checked>
-                <label for="no_payment">No Payment</label>
-
-                <input type="radio" id="first_installment" name="payment_type" value="first_installment">
-                <label for="first_installment">First Installment</label>
-
-                <input type="radio" id="full_payment" name="payment_type" value="full_payment">
-                <label for="full_payment">Full Payment</label>
-            </div>
-
-            <!-- Installment Inputs -->
-            <div class="form-group">
-                <label for="installment_1">1st Installment</label>
-                <input type="text" id="installment_1" name="installment_1" class="form-control" readonly>
+                <label for="name">Student Name</label>
+                <input type="text" id="name" name="name" class="form-control" required>
             </div>
 
             <div class="form-group">
-                <label for="installment_2">2nd Installment</label>
-                <input type="text" id="installment_2" name="installment_2" class="form-control" readonly>
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" class="form-control" required>
             </div>
 
-            <!-- Remaining Fee Input -->
             <div class="form-group">
-                <label for="remaining_fee">Remaining Fee</label>
-                <input type="text" id="remaining_fee" name="remaining_fee" class="form-control" readonly>
+                <label for="password">Password (Auto-generated or custom entry)</label>
+                <div class="input-group">
+                    <input type="text" id="password" name="password" class="form-control" readonly>
+                    <button type="button" id="generate-password" class="btn btn-secondary">Generate</button>
+                </div>
             </div>
-        </div>
 
-        <!-- Payment Method Section -->
-        <div class="form-group">
-            <label>Payment Method</label><br>
-            <input type="radio" id="payment_online" name="payment_method" value="Online" checked>
-            <label for="payment_online">Online</label>
+            <div class="form-group">
+                <label for="phone">Phone</label>
+                <input type="text" id="phone" name="phone" class="form-control">
+            </div>
 
-            <input type="radio" id="payment_offline" name="payment_method" value="Offline">
-            <label for="payment_offline">Offline</label>
+            <div class="form-group">
+                <label>Gender</label><br>
+                <input type="radio" id="male" name="gender" value="Male" required> <label for="male">Male</label>
+                <input type="radio" id="female" name="gender" value="Female" required> <label for="female">Female</label>
+                <input type="radio" id="other" name="gender" value="Other" required> <label for="other">Other</label>
+            </div>
 
-            <input type="radio" id="payment_bank_transfer" name="payment_method" value="Bank Transfer">
-            <label for="payment_bank_transfer">Bank Transfer</label>
-        </div>
+            <div class="form-group">
+                <label for="state">State</label>
+                <select id="state" name="state" class="form-control" required>
+                    <option value="">-- Select State --</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="city">City</label>
+                <select id="city" name="city" class="form-control" required>
+                    <option value="">-- Select City --</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <input type="checkbox" id="custom_address_toggle">
+                <label for="custom_address_toggle">Enter custom address</label>
+            </div>
+
+            <div class="form-group">
+                <label for="custom_address">Custom Address</label>
+                <input type="text" id="custom_address" name="custom_address" class="form-control" disabled>
+            </div>
+
+            <!-- Course selection and payment -->
+            <div class="form-group">
+                <label for="course_id">Select Course</label>
+                <select id="course_id" name="course_id" class="form-control" required>
+                    <option value="">-- Select Course --</option>
+                    <?php foreach ($courses as $course): ?>
+                        <option value="<?php echo $course['course_id']; ?>" data-fee="<?php echo $course['fee']; ?>"><?php echo htmlspecialchars($course['course_name']); ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+            <!-- Batches dropdown based on course selection -->
+            <div class="form-group" id="batch-container" style="display:none;">
+                <label for="batch_id">Select Batch</label>
+                <select id="batch_id" name="batch_id" class="form-control" required>
+                    <option value="">-- Select Batch --</option>
+                </select>
+            </div>
+
+            <!-- Payment Section -->
+            <div id="payment-section" style="display:none;">
+                <h4>Payment Details</h4>
+                <div class="form-group">
+                    <label for="booking_amount">Booking Amount</label>
+                    <input type="text" id="booking_amount" name="booking_amount" class="form-control" readonly>
+                </div>
+
+                <!-- Payment type Selection -->
+                <div class="form-group">
+                    <label>Payment Type</label><br>
+                    <input type="radio" id="no_payment" name="payment_type" value="no_payment" checked>
+                    <label for="no_payment">No Payment</label>
+
+                    <input type="radio" id="first_installment" name="payment_type" value="first_installment">
+                    <label for="first_installment">First Installment</label>
+
+                    <input type="radio" id="full_payment" name="payment_type" value="full_payment">
+                    <label for="full_payment">Full Payment</label>
+                </div>
+
+                <!-- Installment Inputs -->
+                <div class="form-group">
+                    <label for="installment_1">1st Installment</label>
+                    <input type="text" id="installment_1" name="installment_1" class="form-control" readonly>
+                </div>
+
+                <div class="form-group">
+                    <label for="installment_2">2nd Installment</label>
+                    <input type="text" id="installment_2" name="installment_2" class="form-control" readonly>
+                </div>
+
+                <!-- Remaining Fee Input -->
+                <div class="form-group">
+                    <label for="remaining_fee">Remaining Fee</label>
+                    <input type="text" id="remaining_fee" name="remaining_fee" class="form-control" readonly>
+                </div>
+            </div>
+
+            <!-- Payment Method Section -->
+            <div class="form-group">
+                <label>Payment Method</label><br>
+                <input type="radio" id="payment_online" name="payment_method" value="Online" checked>
+                <label for="payment_online">Online</label>
+
+                <input type="radio" id="payment_offline" name="payment_method" value="Offline">
+                <label for="payment_offline">Offline</label>
+
+                <input type="radio" id="payment_bank_transfer" name="payment_method" value="Bank Transfer">
+                <label for="payment_bank_transfer">Bank Transfer</label>
+            </div>
 
 
 
-        <button type="submit" class="btn btn-primary mt-3">Add Student</button>
-    </form>
-</div>
+            <button type="submit" class="btn btn-primary mt-3">Add Student</button>
+        </form>
+    </div>
 
-<?php include '../footer.php'; ?>
-<script src="../../js/cities.js"></script>
-<script src="../../js/add_student.js"></script>
-<!-- <script>
+    <?php include '../footer.php'; ?>
+    <script src="../../js/cities.js"></script>
+    <script src="../../js/add_student.js"></script>
+    <!-- <script>
     // Password Generator
     document.getElementById('generate-password').addEventListener('click', function() {
         document.getElementById('password').value = Math.floor(10000 + Math.random() * 90000); // Generate 5-digit password
